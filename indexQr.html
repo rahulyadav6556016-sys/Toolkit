@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Creator Toolkit</title>
+    
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- AdsGram SDK -->
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+    <!-- QRCode Generator Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { colors: { brand: { bg: '#09090b', surface: '#18181b', accent: '#3b82f6', neon: '#60a5fa' } } } } }
+    </script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { user-select: none; -webkit-user-select: none; background-color: #09090b; color: #fff; font-family: sans-serif; touch-action: manipulation; overflow-x: hidden; }
+        .neon-glow { box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
+        .card-glow { box-shadow: 0 10px 30px -10px rgba(59, 130, 246, 0.2); }
+        .scrollable { overflow-y: auto; overflow-x: hidden; padding-bottom: 100px; height: 100vh; }
+        ::-webkit-scrollbar { display: none; }
+        #qrcode-canvas img { margin: auto; border-radius: 0.5rem; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- HEADER -->
+    <header class="p-4 bg-brand-surface border-b border-gray-800 flex justify-between items-center fixed top-0 w-full z-40 max-w-md left-1/2 -translate-x-1/2 backdrop-blur-md">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-bold text-white shadow-lg">
+                <i class="fa-solid fa-bolt"></i>
+            </div>
+            <div>
+                <h2 class="font-bold text-sm text-gray-200">Creator Toolkit</h2>
+                <p class="text-[10px] text-gray-400">Pro Tools for Social Media</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="w-full max-w-md mx-auto pt-20 scrollable">
+        
+        <!-- ================= TAB 1: QR GENERATOR ================= -->
+        <section id="tab-qr" class="tab-content p-4 space-y-4 animate-fade-in">
+            <div class="bg-brand-surface border border-gray-800 rounded-2xl p-5 card-glow">
+                <h3 class="text-sm font-bold text-gray-300 mb-3"><i class="fa-solid fa-link text-brand-neon mr-2"></i>Enter URL or Text</h3>
+                <input type="text" id="qr-input" placeholder="https://instagram.com/yourprofile" class="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-sm text-white outline-none focus:border-brand-accent transition mb-4">
+                
+                <div class="flex items-center justify-between mb-4 bg-gray-900 p-3 rounded-xl border border-gray-700">
+                    <span class="text-xs text-gray-400 font-semibold">QR Color (Premium)</span>
+                    <input type="color" id="qr-color" value="#ffffff" class="w-8 h-8 rounded cursor-pointer bg-transparent border-none">
+                </div>
+
+                <button onclick="generateQR()" class="w-full py-3 bg-gray-800 text-white font-bold rounded-xl active:scale-95 transition border border-gray-700 hover:bg-gray-700">
+                    Generate Preview
+                </button>
+            </div>
+
+            <!-- QR Preview Box -->
+            <div id="qr-result-box" class="hidden bg-brand-surface border border-gray-800 rounded-2xl p-5 text-center card-glow">
+                <div id="qrcode-canvas" class="bg-white p-2 rounded-xl inline-block mb-4 w-48 h-48 flex items-center justify-center"></div>
+                
+                <div class="space-y-3">
+                    <!-- Free Download -->
+                    <button onclick="downloadQR('basic')" class="w-full py-3 bg-gray-800 text-gray-300 font-bold rounded-xl active:scale-95 transition border border-gray-700 text-sm">
+                        <i class="fa-solid fa-download mr-2"></i> Download Basic (Free)
+                    </button>
+                    <!-- Premium Download -->
+                    <button onclick="downloadQR('hd')" class="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl active:scale-95 transition neon-glow text-sm flex items-center justify-center">
+                        <i class="fa-solid fa-lock mr-2 text-xs"></i> Unlock HD & Color (Ad)
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 2: FANCY FONTS ================= -->
+        <section id="tab-fonts" class="tab-content hidden p-4 space-y-4 animate-fade-in">
+            <!-- Overlap fixed: Removed sticky, added margin-bottom -->
+            <div class="bg-brand-surface border border-gray-800 rounded-2xl p-4 card-glow mb-4 relative z-10">
+                <input type="text" id="font-input" oninput="updateFonts()" placeholder="Type your name or bio here..." class="w-full bg-gray-900 border border-brand-accent/50 rounded-xl p-3 text-sm text-white outline-none focus:border-brand-accent transition">
+            </div>
+
+            <div id="font-list" class="space-y-3">
+                <!-- Fonts will be generated here by JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- BOTTOM NAVIGATION (2 Tabs Only) -->
+    <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-brand-surface/95 border-t border-gray-800 px-2 py-2 z-40 backdrop-blur-md">
+        <div class="flex justify-between items-center w-full">
+            <button onclick="switchTab('qr')" id="nav-qr" class="nav-btn w-1/2 flex flex-col items-center text-brand-neon py-2 transition">
+                <i class="fa-solid fa-qrcode text-xl mb-1"></i><span class="text-[10px] font-bold uppercase">QR Tool</span>
+            </button>
+            <button onclick="switchTab('fonts')" id="nav-fonts" class="nav-btn w-1/2 flex flex-col items-center text-gray-500 py-2 transition">
+                <i class="fa-solid fa-font text-xl mb-1"></i><span class="text-[10px] font-bold uppercase">Fonts</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-green-600 text-white px-4 py-2 rounded-full text-xs font-bold transition-opacity opacity-0 pointer-events-none z-50 shadow-lg">
+        Copied to clipboard!
+    </div>
+
+    <script>
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                let tg = window.Telegram?.WebApp;
+                if (tg) { tg.ready(); tg.expand(); }
+            } catch(e) {}
+            updateFonts(); // Load initial fonts
+        });
+
+        // ==================== ADSGRAM SETUP ====================
+        let RewardedAd = null, InterstitialAd = null;
+        try {
+            if (window.Adsgram) {
+                RewardedAd = window.Adsgram.init({ blockId: "46207" });
+                InterstitialAd = window.Adsgram.init({ blockId: "int-46208" });
+            }
+        } catch (e) {
+            console.log("AdsGram Initialization Failed or Offline.");
+        }
+
+        // --- TIME-BASED INTERSTITIAL LOGIC ---
+        // Every 2.5 minutes (150,000 milliseconds), show an interstitial ad
+        setInterval(() => {
+            triggerInterstitialSafe();
+        }, 150000);
+
+        function triggerInterstitialSafe() {
+            if(InterstitialAd) {
+                InterstitialAd.show().catch((e) => console.log("Interstitial Skipped", e));
+            }
+        }
+
+        // ==================== UTILS ====================
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(el => { el.classList.remove('text-brand-neon'); el.classList.add('text-gray-500'); });
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            document.getElementById('nav-' + tabId).classList.remove('text-gray-500'); 
+            document.getElementById('nav-' + tabId).classList.add('text-brand-neon');
+        }
+
+        function showToast(msg) {
+            let toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.remove('opacity-0');
+            setTimeout(() => toast.classList.add('opacity-0'), 2000);
+        }
+
+        // ==================== TAB 1: QR LOGIC ====================
+        let qrGenerated = null;
+        function generateQR() {
+            let input = document.getElementById('qr-input').value.trim();
+            if(!input) return alert("Please enter text or URL first!");
+
+            let qrContainer = document.getElementById('qrcode-canvas');
+            qrContainer.innerHTML = ''; // Clear previous
+            
+            // Standard black preview
+            qrGenerated = new QRCode(qrContainer, {
+                text: input,
+                width: 150,
+                height: 150,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            document.getElementById('qr-result-box').classList.remove('hidden');
+        }
+
+        function downloadQR(type) {
+            let input = document.getElementById('qr-input').value.trim();
+            let color = document.getElementById('qr-color').value;
+
+            if(type === 'basic') {
+                executeQRDownload(input, "#000000", 250);
+                showToast("Basic QR Downloaded!");
+            } 
+            else if(type === 'hd') {
+                if(RewardedAd) {
+                    RewardedAd.show().then(() => {
+                        executeQRDownload(input, color, 1024);
+                        showToast("Premium HD QR Unlocked & Downloaded!");
+                    }).catch(() => {
+                        alert("You need to watch the ad to unlock Premium HD.");
+                    });
+                } else {
+                    executeQRDownload(input, color, 1024);
+                    showToast("Premium HD QR Downloaded!");
+                }
+            }
+        }
+
+        function executeQRDownload(text, color, size) {
+            let tempDiv = document.createElement('div');
+            new QRCode(tempDiv, {
+                text: text,
+                width: size,
+                height: size,
+                colorDark : color,
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            setTimeout(() => {
+                let img = tempDiv.querySelector('img');
+                if(img) {
+                    let a = document.createElement('a');
+                    a.href = img.src;
+                    a.download = `QR_${size}x${size}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+            }, 300); 
+        }
+
+        // ==================== TAB 2: FONTS LOGIC ====================
+        const charMaps = {
+            'bold': { 'a':'𝗮','b':'𝗯','c':'𝗰','d':'𝗱','e':'𝗲','f':'𝗳','g':'𝗴','h':'𝗵','i':'𝗶','j':'𝗷','k':'𝗸','l':'𝗹','m':'𝗺','n':'𝗻','o':'𝗼','p':'𝗽','q':'𝗾','r':'𝗿','s':'𝘀','t':'𝘁','u':'𝘂','v':'𝘃','w':'𝘄','x':'𝘅','y':'𝘆','z':'𝘇', 'A':'𝗔','B':'𝗕','C':'𝗖','D':'𝗗','E':'𝗘','F':'𝗙','G':'𝗚','H':'𝗛','I':'𝗜','J':'𝗝','K':'𝗞','L':'𝗟','M':'𝗠','N':'𝗡','O':'𝗢','P':'𝗣','Q':'𝗤','R':'𝗥','S':'𝗦','T':'𝗧','U':'𝗨','V':'𝗩','W':'𝗪','X':'𝗫','Y':'𝗬','Z':'𝗭' },
+            'script': { 'a':'𝒶','b':'𝒷','c':'𝒸','d':'𝒹','e':'𝑒','f':'𝒻','g':'𝑔','h':'𝒽','i':'𝒾','j':'𝒿','k':'𝓀','l':'𝓁','m':'𝓂','n':'𝓃','o':'𝑜','p':'𝓅','q':'𝓆','r':'𝓇','s':'𝓈','t':'𝓉','u':'𝓊','v':'𝓋','w':'𝓌','x':'𝓍','y':'𝓎','z':'𝓏', 'A':'𝒜','B':'𝐵','C':'𝒞','D':'𝒟','E':'𝐸','F':'𝐹','G':'𝒢','H':'𝐻','I':'𝐼','J':'𝒥','K':'𝒦','L':'𝐿','M':'𝑀','N':'𝒩','O':'𝒪','P':'𝒫','Q':'𝒬','R':'𝑅','S':'𝒮','T':'𝒯','U':'𝒰','V':'𝒱','W':'𝒲','X':'𝒳','Y':'𝒴','Z':'𝒵' },
+            'gothic': { 'a':'𝖆','b':'𝖇','c':'𝖈','d':'𝖉','e':'𝖊','f':'𝖋','g':'𝖌','h':'𝖍','i':'𝖎','j':'𝖏','k':'𝖐','l':'𝖑','m':'𝖒','n':'𝖓','o':'𝖔','p':'𝖕','q':'𝖖','r':'𝖗','s':'𝖘','t':'𝖙','u':'𝖚','v':'𝖛','w':'𝖜','x':'𝖝','y':'𝖞','z':'𝖟', 'A':'𝕬','B':'𝕭','C':'𝕮','D':'𝕯','E':'𝕰','F':'𝕱','G':'𝕲','H':'𝕳','I':'𝕴','J':'𝕵','K':'𝕶','L':'𝕷','M':'𝕸','N':'𝕹','O':'𝕺','P':'𝕻','Q':'𝕼','R':'𝕽','S':'𝕾','T':'𝕿','U':'𝖀','V':'𝖁','W':'𝖂','X':'𝖃','Y':'𝖄','Z':'𝖅' },
+            'squares': { 'a':'🄰','b':'🄱','c':'🄲','d':'🄳','e':'🄴','f':'🄵','g':'🄶','h':'🄷','i':'🄸','j':'🄹','k':'🄺','l':'🄻','m':'🄼','n':'🄽','o':'🄾','p':'🄿','q':'🅀','r':'🅁','s':'🅂','t':'🅃','u':'🅄','v':'🅅','w':'🅆','x':'🅇','y':'🅈','z':'🅉', 'A':'🄰','B':'🄱','C':'🄲','D':'🄳','E':'🄴','F':'🄵','G':'🄶','H':'🄷','I':'🄸','J':'🄹','K':'🄺','L':'🄻','M':'🄼','N':'🄽','O':'🄾','P':'🄿','Q':'🅀','R':'🅁','S':'🅂','T':'🅃','U':'🅄','V':'🅅','W':'🅆','X':'🅇','Y':'🅈','Z':'🅉' },
+            'circles': { 'a':'ⓐ','b':'ⓑ','c':'ⓒ','d':'ⓓ','e':'ⓔ','f':'ⓕ','g':'ⓖ','h':'ⓗ','i':'ⓘ','j':'ⓙ','k':'ⓚ','l':'ⓛ','m':'ⓜ','n':'ⓝ','o':'ⓞ','p':'ⓟ','q':'ⓠ','r':'ⓡ','s':'ⓢ','t':'ⓣ','u':'ⓤ','v':'ⓥ','w':'ⓦ','x':'ⓧ','y':'ⓨ','z':'ⓩ', 'A':'Ⓐ','B':'Ⓑ','C':'Ⓒ','D':'Ⓓ','E':'Ⓔ','F':'Ⓕ','G':'Ⓖ','H':'Ⓗ','I':'Ⓘ','J':'Ⓙ','K':'Ⓚ','L':'Ⓛ','M':'Ⓜ','N':'Ⓝ','O':'Ⓞ','P':'Ⓟ','Q':'Ⓠ','R':'Ⓡ','S':'Ⓢ','T':'Ⓣ','U':'Ⓤ','V':'Ⓥ','W':'Ⓦ','X':'Ⓧ','Y':'Ⓨ','Z':'Ⓩ' }
+        };
+
+        const fontStyles = [
+            { id: 'bold', name: 'Bold Sans', type: 'free' },
+            { id: 'script', name: 'Cursive Love', type: 'free' },
+            { id: 'gothic', name: 'Dark Gothic', type: 'vip' },
+            { id: 'squares', name: 'Boxy Blocks', type: 'vip' },
+            { id: 'circles', name: 'Bubble Text', type: 'vip' }
+        ];
+
+        function convertText(text, map) {
+            return text.split('').map(c => map[c] || c).join('');
+        }
+
+        function updateFonts() {
+            let input = document.getElementById('font-input').value || 'Preview Text';
+            let list = document.getElementById('font-list');
+            list.innerHTML = '';
+
+            fontStyles.forEach(style => {
+                let converted = convertText(input, charMaps[style.id]);
+                
+                let isVip = style.type === 'vip';
+                let btnHtml = isVip 
+                    ? `<button onclick="copyFontVIP('${converted}')" class="text-[11px] bg-purple-600/20 text-purple-400 px-3 py-2 rounded-lg border border-purple-500/30 flex items-center font-bold whitespace-nowrap active:scale-95"><i class="fa-solid fa-play mr-1.5 text-[10px]"></i> Watch Ad to Unlock</button>`
+                    : `<button onclick="copyText('${converted}')" class="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg border border-gray-700 font-bold active:scale-95 transition">Copy</button>`;
+
+                let html = `
+                    <div class="bg-brand-surface border border-gray-800 rounded-xl p-4 flex justify-between items-center gap-2">
+                        <div class="overflow-hidden">
+                            <p class="text-[10px] text-gray-500 mb-1 uppercase font-bold">${style.name}</p>
+                            <p class="text-white text-lg truncate">${converted}</p>
+                        </div>
+                        <div class="shrink-0">${btnHtml}</div>
+                    </div>
+                `;
+                list.innerHTML += html;
+            });
+        }
+
+        function copyFontVIP(text) {
+            if(RewardedAd) {
+                RewardedAd.show().then(() => {
+                    copyText(text);
+                    showToast("VIP Font Unlocked & Copied!");
+                }).catch(() => {
+                    alert("Watch ad to unlock this VIP font.");
+                });
+            } else {
+                copyText(text);
+                showToast("VIP Font Copied!");
+            }
+        }
+
+        function copyText(text) {
+            navigator.clipboard.writeText(text);
+            showToast("Copied!");
+        }
+
+    </script>
+</body>
+</html>
